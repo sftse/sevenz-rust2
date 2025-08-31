@@ -17,12 +17,12 @@ use crate::{
 
 const MAX_MEM_LIMIT_KB: usize = usize::MAX / 1024;
 
-pub struct BoundedReader<R: Read> {
+pub struct BoundedReader<R> {
     inner: R,
     remain: usize,
 }
 
-impl<R: Read> BoundedReader<R> {
+impl<R> BoundedReader<R> {
     pub fn new(inner: R, max_size: usize) -> Self {
         Self {
             inner,
@@ -62,7 +62,7 @@ impl<'a, R> Clone for SharedBoundedReader<'a, R> {
     }
 }
 
-impl<'a, R: Read + Seek> Seek for SharedBoundedReader<'a, R> {
+impl<'a, R: Seek> Seek for SharedBoundedReader<'a, R> {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
         let new_pos = match pos {
             SeekFrom::Start(pos) => self.bounds.0 as i64 + pos as i64,
@@ -94,7 +94,7 @@ impl<'a, R: Read + Seek> Read for SharedBoundedReader<'a, R> {
     }
 }
 
-impl<'a, R: Read + Seek> SharedBoundedReader<'a, R> {
+impl<'a, R> SharedBoundedReader<'a, R> {
     fn new(inner: Rc<RefCell<&'a mut R>>, bounds: (u64, u64)) -> Self {
         Self {
             inner,
@@ -111,7 +111,7 @@ struct Crc32VerifyingReader<R> {
     remaining: i64,
 }
 
-impl<R: Read> Crc32VerifyingReader<R> {
+impl<R> Crc32VerifyingReader<R> {
     fn new(inner: R, remaining: usize, expected_value: u64) -> Self {
         Self {
             inner,
@@ -1033,14 +1033,14 @@ fn read_bits<R: Read>(header: &mut R, size: usize) -> io::Result<BitSet> {
     Ok(bits)
 }
 
-struct NamesReader<'a, R: Read> {
+struct NamesReader<'a, R> {
     max_bytes: usize,
     read_bytes: usize,
     cache: Vec<u16>,
     reader: &'a mut R,
 }
 
-impl<'a, R: Read> NamesReader<'a, R> {
+impl<'a, R> NamesReader<'a, R> {
     fn new(reader: &'a mut R, max_bytes: usize) -> Self {
         Self {
             max_bytes,
@@ -1084,7 +1084,7 @@ struct IndexEntry {
 }
 
 /// Reads a 7z archive file.
-pub struct ArchiveReader<R: Read + Seek> {
+pub struct ArchiveReader<R> {
     source: R,
     archive: Archive,
     password: Password,
@@ -1554,7 +1554,7 @@ impl<R: Read + Seek> ArchiveReader<R> {
 ///
 /// Provides access to entries within a single compression block and allows
 /// decoding files from that block.
-pub struct BlockDecoder<'a, R: Read + Seek> {
+pub struct BlockDecoder<'a, R> {
     thread_count: u32,
     block_index: usize,
     archive: &'a Archive,
